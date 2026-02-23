@@ -471,7 +471,7 @@ class ObstacleAvoidingWaypointController:
             if obstacle_in_front:
                 self.mode = "WALL_FOLLOW"
             elif self.mode == "WALL_FOLLOW":
-                # If path clear again → go back to goal
+                # If path clear again then go back to goal
                 if len(distances) == 0 or min(distances) > distance_from_wall_safety:
                     self.mode = "GO_TO_GOAL"
 
