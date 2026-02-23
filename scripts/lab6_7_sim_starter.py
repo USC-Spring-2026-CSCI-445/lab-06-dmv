@@ -262,10 +262,10 @@ class ObstacleAvoidingWaypointController:
 
         # Add PID controllers here for obstacle avoidance and waypoint following
         ######### Your code starts here #########
-        self.linear_pid = PIDController(kP=1.2, kI=0.00, kD=1.5, kS=0.5, u_min=0.0, u_max=0.22)
+        self.linear_pid = PIDController(kP=1.2, kI=0.00, kD=1.5, kS=0.5, u_min=0.0, u_max=0.12)
         self.angular_pid = PIDController(kP=1.2, kI=0.2, kD=1.0, kS=0.5, u_min=-2.0, u_max=2.0)
 
-        self.wall_pd = PDController(kP=2.0, kD=0.1, kS=0.5, u_min=-2.0, u_max=2.0)
+        self.wall_pd = PDController(kP=1.5, kD=2.0, kS=0.5, u_min=-1.5, u_max=1.5)
         self.mode = "GO_TO_GOAL"
         ######### Your code ends here #########
 
@@ -332,8 +332,6 @@ class ObstacleAvoidingWaypointController:
         ctrl_msg = Twist()
 
         ######### Your code starts here #########
-        ctrl_msg = Twist()
-
         if self.ir_distance is None:
             return
 
@@ -342,7 +340,7 @@ class ObstacleAvoidingWaypointController:
 
         u = self.wall_pd.control(error, t)
 
-        ctrl_msg.linear.x = 0.15
+        ctrl_msg.linear.x = 0.08
         ctrl_msg.angular.z = u
         ######### Your code ends here #########
 
@@ -432,7 +430,7 @@ class ObstacleAvoidingWaypointController:
         rate = rospy.Rate(10)  # 20 Hz
 
         current_waypoint_idx = 0
-        distance_from_wall_safety = 1.0
+        distance_from_wall_safety = 1.3
         cone_angle = radians(5)
 
         while not rospy.is_shutdown():
@@ -462,16 +460,11 @@ class ObstacleAvoidingWaypointController:
             # Detect obstacle in front cone
             distances = self.laserscan_distances_to_point(goal, cone_angle)
 
-            obstacle_in_front = False
-            if len(distances) > 0:
-                if min(distances) < distance_from_wall_safety:
-                    obstacle_in_front = True
+            if self.mode == "GO_TO_GOAL":
+                if len(distances) > 0 and min(distances) <= distance_from_wall_safety:
+                    self.mode = "WALL_FOLLOW"
 
-            # ARBITRATION
-            if obstacle_in_front:
-                self.mode = "WALL_FOLLOW"
             elif self.mode == "WALL_FOLLOW":
-                # If path clear again then go back to goal
                 if len(distances) == 0 or min(distances) > distance_from_wall_safety:
                     self.mode = "GO_TO_GOAL"
 
