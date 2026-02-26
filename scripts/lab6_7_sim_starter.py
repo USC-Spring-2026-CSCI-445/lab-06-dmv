@@ -247,7 +247,7 @@ class ObstacleAvoidingWaypointController:
         self.laserscan: Optional[LaserScan] = None
         self.laserscan_angles: Optional[List[float]] = None
         self.ir_distance = None
-        self.wall_following_desired_distance = 0.5  # set this to whatever you want
+        self.wall_following_desired_distance = 0.2  # set this to whatever you want
 
         # Subscriber to the robot's current position (assuming you have Odometry data)
         self.odom_sub = rospy.Subscriber("/odom", Odometry, self.odom_callback)
@@ -265,7 +265,7 @@ class ObstacleAvoidingWaypointController:
         self.linear_pid = PIDController(kP=1.2, kI=0.00, kD=1.5, kS=0.5, u_min=0.0, u_max=0.12)
         self.angular_pid = PIDController(kP=1.2, kI=0.2, kD=1.0, kS=0.5, u_min=-2.0, u_max=2.0)
 
-        self.wall_pd = PDController(kP=1.5, kD=2.0, kS=0.5, u_min=-1.5, u_max=1.5)
+        self.wall_pd = PDController(kP=1.2, kD=2.0, kS=0.5, u_min=-2.0, u_max=2.0)
         self.mode = "GO_TO_GOAL"
         ######### Your code ends here #########
 
@@ -341,7 +341,7 @@ class ObstacleAvoidingWaypointController:
         u = self.wall_pd.control(error, t)
 
         ctrl_msg.linear.x = 0.08
-        ctrl_msg.angular.z = u
+        ctrl_msg.angular.z = -u
         ######### Your code ends here #########
 
         self.robot_ctrl_pub.publish(ctrl_msg)
@@ -430,7 +430,7 @@ class ObstacleAvoidingWaypointController:
         rate = rospy.Rate(10)  # 20 Hz
 
         current_waypoint_idx = 0
-        distance_from_wall_safety = 1.3
+        distance_from_wall_safety = 0.7
         cone_angle = radians(5)
 
         while not rospy.is_shutdown():
