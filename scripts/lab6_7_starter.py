@@ -235,7 +235,7 @@ class ObstacleFreeWaypointController:
             self.robot_ctrl_pub.publish(ctrl_msg)
 
             # Check if waypoint reached
-            if distance_error < 0.2:
+            if distance_error < 0.1:
                 current_waypoint_idx += 1
             ######### Your code ends here #########
             rate.sleep()
@@ -350,7 +350,7 @@ class ObstacleAvoidingWaypointController:
         u = self.wall_pd.control(error, t)
 
         ctrl_msg.linear.x = 0.15
-        ctrl_msg.angular.z = u
+        ctrl_msg.angular.z = -u
         ######### Your code ends here #########
 
         self.robot_ctrl_pub.publish(ctrl_msg)
@@ -465,7 +465,7 @@ class ObstacleAvoidingWaypointController:
             dy = goal["y"] - self.current_position["y"]
             distance_to_goal = sqrt(dx**2 + dy**2)
 
-            if distance_to_goal < 0.2:
+            if distance_to_goal < 0.1:
                 current_waypoint_idx += 1
                 rate.sleep()
                 continue
@@ -473,13 +473,11 @@ class ObstacleAvoidingWaypointController:
             # Check obstacle in goal direction
             distances = self.laserscan_distances_to_point(goal, cone_angle)
 
-            obstacle_in_front = False
-            if len(distances) > 0 and min(distances) < distance_from_wall_safety:
-                obstacle_in_front = True
-
             # Mode switching
-            if obstacle_in_front:
-                self.mode = "WALL_FOLLOW"
+            if self.mode == "GO_TO_GOAL":
+                if len(distances) > 0 and min(distances) <= distance_from_wall_safety:
+                    self.mode = "WALL_FOLLOW"
+
             elif self.mode == "WALL_FOLLOW":
                 if len(distances) == 0 or min(distances) > distance_from_wall_safety:
                     self.mode = "GO_TO_GOAL"
